@@ -2,7 +2,12 @@ from strands import Agent, tool
 from strands_tools import calculator # Import the calculator tool
 import argparse
 import json
-from strands.models import BedrockModel
+from strands.models.litellm import LiteLLMModel
+import os
+
+os.environ["AZURE_API_KEY"] = "<YOUR_API_KEY>"
+os.environ["AZURE_API_BASE"] = "<YOUR_API_BASE>"
+os.environ["AZURE_API_VERSION"] = "<YOUR_API_VERSION>"
 
 # Create a custom tool 
 @tool
@@ -10,18 +15,19 @@ def weather():
     """ Get weather """ # Dummy implementation
     return "sunny"
 
-
-model_id = "qwen.qwen3-32b-v1:0"
-model = BedrockModel(
-    model_id=model_id,
+model = "azure/gpt-4.1-mini"
+litellm_model = LiteLLMModel(
+    model_id=model, params={"max_tokens": 32000, "temperature": 0.7}
 )
+
+
 agent = Agent(
-    model=model,
+    model=litellm_model,
     tools=[calculator, weather],
     system_prompt="You're a helpful assistant. You can do simple math calculation, and tell the weather."
 )
 
-def strands_agent_bedrock(payload):
+def strands_agent_open_ai(payload):
     """
     Invoke the agent with a payload
     """
@@ -33,4 +39,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("payload", type=str)
     args = parser.parse_args()
-    response = strands_agent_bedrock(json.loads(args.payload))
+    response = strands_agent_open_ai(json.loads(args.payload))
+    print(response)
